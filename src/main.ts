@@ -5,6 +5,7 @@ import { Transport } from '@nestjs/microservices';
 import { environments } from './settings/environments/environments';
 import * as morgan from 'morgan';
 import { DatabaseServicePostgreSQL } from './shared/connections/database/postgresql/postgresql.service';
+import { DatabaseServiceSQLServer2022 } from './shared/connections/database/postgresql/sqlserver.service';
 
 async function bootstrap() {
   const logger: Logger = new Logger('SigameLegacyApp');
@@ -14,10 +15,10 @@ async function bootstrap() {
   await app.listen(environments.NODE_ENV === 'production' ? 3015 : 4015);
   app.use(morgan('dev'));
 
+  const sqlServerService: DatabaseServiceSQLServer2022 =
+    new DatabaseServiceSQLServer2022();
 
-  const postgresqlService: DatabaseServicePostgreSQL = new DatabaseServicePostgreSQL();
-
-  logger.log(await postgresqlService.connect())
+  logger.log(await sqlServerService.connect());
   logger.log(
     `🚀🎉 The SigameLegacy microservice is running on: http://localhost:${environments.NODE_ENV === 'production' ? 3007 : 4007}✅`,
   );
@@ -26,11 +27,11 @@ async function bootstrap() {
     transport: Transport.KAFKA,
     options: {
       client: {
-        clientId: environments.SIGAME_LEGACY_KAFKA_CLIENT_ID,
+        clientId: environments.INVENTORY_KAFKA_CLIENT_ID,
         brokers: [environments.KAFKA_BROKER_URL],
       },
       consumer: {
-        groupId: environments.SIGAME_LEGACY_KAFKA_GROUP_ID,
+        groupId: environments.INVENTORY_KAFKA_GROUP_ID,
         allowAutoTopicCreation: true,
       },
     },

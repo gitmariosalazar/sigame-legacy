@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app/controller/app.controller';
 import { AppService } from './app/service/app.service';
 import { HomeModule } from './app/module/home.module';
-import { AppSigameLegacyModulesUsingPostgreSQL } from './factory/postgresql/modules-using-postgresql.module';
-
+import { AppSigameLegacyModulesUsingSQLServer } from './factory/sqlserver/modules-using-sqlserver.module';
 @Module({
-  imports: [HomeModule, AppSigameLegacyModulesUsingPostgreSQL],
+  imports: [HomeModule, AppSigameLegacyModulesUsingSQLServer],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

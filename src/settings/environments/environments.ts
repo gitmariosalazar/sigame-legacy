@@ -13,9 +13,9 @@ interface EnvironmentsVariables {
   SECRET_KEY: string;
   KAFKA_BROKER_URL: string;
   KAFKA_TOPIC: string;
-  SIGAME_LEGACY_KAFKA_CLIENT_ID: string;
-  SIGAME_LEGACY_KAFKA_GROUP_ID: string;
-  SIGAME_LEGACY_KAFKA_CLIENT: string;
+  INVENTORY_KAFKA_CLIENT_ID: string;
+  INVENTORY_KAFKA_GROUP_ID: string;
+  INVENTORY_KAFKA_CLIENT: string;
   KAFKA_BROKER_INTERNAL: string;
   KAFKA_BROKER_EXTERNAL: string;
 }
@@ -34,9 +34,9 @@ const environmentsSchema = Joi.object<EnvironmentsVariables>({
   SECRET_KEY: Joi.string().required(),
   KAFKA_BROKER_URL: Joi.string().required(),
   KAFKA_TOPIC: Joi.string().required(),
-  SIGAME_LEGACY_KAFKA_CLIENT_ID: Joi.string().required(),
-  SIGAME_LEGACY_KAFKA_GROUP_ID: Joi.string().required(),
-  SIGAME_LEGACY_KAFKA_CLIENT: Joi.string().required(),
+  INVENTORY_KAFKA_CLIENT_ID: Joi.string().required(),
+  INVENTORY_KAFKA_GROUP_ID: Joi.string().required(),
+  INVENTORY_KAFKA_CLIENT: Joi.string().required(),
   KAFKA_BROKER_INTERNAL: Joi.string().required(),
   KAFKA_BROKER_EXTERNAL: Joi.string().required(),
 }).unknown(true);
@@ -57,11 +57,12 @@ export const environments: EnvironmentsVariables = {
   DEBUG: envVars.DEBUG === true,
   ALLOWED_HOSTS: envVars.ALLOWED_HOSTS,
   SECRET_KEY: envVars.SECRET_KEY,
-  KAFKA_BROKER_URL: envVars.KAFKA_BROKER_INTERNAL || envVars.KAFKA_BROKER_EXTERNAL,
+  KAFKA_BROKER_URL:
+    envVars.KAFKA_BROKER_INTERNAL || envVars.KAFKA_BROKER_EXTERNAL,
   KAFKA_TOPIC: envVars.KAFKA_TOPIC,
-  SIGAME_LEGACY_KAFKA_CLIENT_ID: envVars.SIGAME_LEGACY_KAFKA_CLIENT_ID,
-  SIGAME_LEGACY_KAFKA_GROUP_ID: envVars.SIGAME_LEGACY_KAFKA_GROUP_ID,
-  SIGAME_LEGACY_KAFKA_CLIENT: envVars.SIGAME_LEGACY_KAFKA_CLIENT,
+  INVENTORY_KAFKA_CLIENT_ID: envVars.INVENTORY_KAFKA_CLIENT_ID,
+  INVENTORY_KAFKA_GROUP_ID: envVars.INVENTORY_KAFKA_GROUP_ID,
+  INVENTORY_KAFKA_CLIENT: envVars.INVENTORY_KAFKA_CLIENT,
   KAFKA_BROKER_EXTERNAL: envVars.KAFKA_BROKER_EXTERNAL,
   KAFKA_BROKER_INTERNAL: envVars.KAFKA_BROKER_INTERNAL,
 };
