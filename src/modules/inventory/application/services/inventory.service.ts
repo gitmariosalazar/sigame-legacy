@@ -250,4 +250,25 @@ export class InventoryService implements InterfaceInventoryUseCase {
       throw error;
     }
   }
+
+  async findAllInventoriesPaginated(params: {
+    limit: number;
+    offset: number;
+    query?: string;
+  }): Promise<InventoryResponse[]> {
+    try {
+      const inventories =
+        await this.inventoryRepository.findAllInventoriesPaginated(params);
+      if (inventories && inventories.length > 0) {
+        return inventories;
+      } else {
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'No inventories found',
+        });
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
 }

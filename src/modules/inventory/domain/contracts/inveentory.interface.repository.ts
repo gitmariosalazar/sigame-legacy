@@ -18,4 +18,10 @@ export interface InterfaceInventoryRepository {
   ): Promise<InventoryResponse[]>;
   getInventoriesLikeItemName(itemName: string): Promise<InventoryResponse[]>;
   getInventoriesLikeItemCode(itemCode: string): Promise<InventoryResponse[]>;
+
+  findAllInventoriesPaginated(params: {
+    limit: number;
+    offset: number;
+    query?: string;
+  }): Promise<InventoryResponse[]>;
 }

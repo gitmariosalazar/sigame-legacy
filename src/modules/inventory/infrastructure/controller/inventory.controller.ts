@@ -80,4 +80,17 @@ export class InventoryController {
   async getInventoriesLikeItemCode(@Payload() itemCode: string) {
     return this.inventoryService.getInventoriesLikeItemCode(itemCode);
   }
+
+  @Get('find-all-inventories-paginated')
+  @MessagePattern('inventory.find-all-inventories-paginated')
+  async findAllInventoriesPaginated(
+    @Payload()
+    params: {
+      limit: number;
+      offset: number;
+      query?: string;
+    },
+  ) {
+    return this.inventoryService.findAllInventoriesPaginated(params);
+  }
 }

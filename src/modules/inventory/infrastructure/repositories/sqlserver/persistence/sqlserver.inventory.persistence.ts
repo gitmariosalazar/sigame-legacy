@@ -397,4 +397,79 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
       throw error;
     }
   }
+
+  async findAllInventoriesPaginated(params: {
+    limit: number;
+    offset: number;
+    query?: string;
+  }): Promise<InventoryResponse[]> {
+    try {
+      const { limit, offset, query: searchQuery } = params;
+
+      let whereClause = '';
+      const queryParams: any[] = [];
+
+      if (searchQuery) {
+        whereClause = `WHERE i.inv_nombre LIKE '%' + @searchQuery + '%' COLLATE Latin1_General_CI_AI OR i.inv_codigo LIKE '%' + @searchQuery + '%' COLLATE Latin1_General_CI_AI`;
+        queryParams.push({ name: 'searchQuery', value: searchQuery });
+      }
+
+      const sqlQuery = `
+      WITH InventoryPaged AS (
+          SELECT
+              i.inv_identificador AS inventory_id,
+              i.cta_co_codigo AS company_code,
+              i.cta_co_codigo AS account_code,
+              i.inv_codigo AS item_code,
+              i.inv_nombre AS item_name,
+              i.inv_estado AS item_status,
+              i.inv_stock_min AS min_stock,
+              i.inv_existencia AS current_stock,
+              i.inv_nivel AS item_level,
+              i.inv_valor_pp AS avg_cost_value,
+              i.inv_tipo AS item_type,
+              i.inv_unid_medida AS unit_of_measure,
+              i.inv_iva AS vat_applicable,
+              i.inv_cod_anterior AS previous_code,
+              ROW_NUMBER() OVER (ORDER BY i.inv_identificador) AS rn
+          FROM inv_inventario i
+          ${whereClause}
+      )
+      SELECT
+          inventory_id,
+          company_code,
+          account_code,
+          item_code,
+          item_name,
+          item_status,
+          min_stock,
+          current_stock,
+          item_level,
+          avg_cost_value,
+          item_type,
+          unit_of_measure,
+          vat_applicable,
+          previous_code
+      FROM InventoryPaged
+      WHERE rn > @offset
+        AND rn <= (@offset + @limit);
+    `;
+
+      queryParams.push(
+        { name: 'limit', value: limit },
+        { name: 'offset', value: offset },
+      );
+
+      const result = await this.sqlServerService.query<InventorySqlResponse>(
+        sqlQuery,
+        queryParams,
+      );
+
+      return result.map(
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
 }
