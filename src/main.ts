@@ -12,16 +12,18 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  await app.listen(environments.NODE_ENV === 'production' ? 3015 : 4015);
+  //await app.listen(environments.NODE_ENV === 'production' ? 3015 : 4015);
   app.use(morgan('dev'));
 
   const sqlServerService: DatabaseServiceSQLServer2022 =
     new DatabaseServiceSQLServer2022();
 
   logger.log(await sqlServerService.connect());
+  /*
   logger.log(
     `🚀🎉 The SigameLegacy microservice is running on: http://localhost:${environments.NODE_ENV === 'production' ? 3007 : 4007}✅`,
   );
+  */
 
   const microservice = await NestFactory.createMicroservice(AppModule, {
     transport: Transport.KAFKA,
@@ -38,6 +40,6 @@ async function bootstrap() {
   });
 
   await microservice.listen();
-  logger.log(`🚀🎉 The SigameLegacy - microservice is listening to KAFKA...✅`);
+  logger.log(`Nest application successfully started`);
 }
 bootstrap();
