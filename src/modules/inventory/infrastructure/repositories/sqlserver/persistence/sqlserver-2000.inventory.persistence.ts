@@ -3,17 +3,17 @@ import { InterfaceInventoryRepository } from '../../../../domain/contracts/invee
 import { InventoryResponse } from '../../../../domain/schemas/dto/response/inventory.response';
 import { InventorySqlResponse } from '../../../interfaces/sql/inventory.sql.response';
 import { InventoryAdapter } from '../adapters/inventory.adapter';
-import { DatabaseServiceSQLServer2022 } from '../../../../../../shared/connections/database/sqlserver/sqlserver-2022.service';
+import { DatabaseServiceSQLServer2000 } from '../../../../../../shared/connections/database/sqlserver/sqlserver-2000.service';
 
 /*
 CREATE TABLE inv_inventario ( inv_identificador INT NOT NULL, cta_co_codigo VARCHAR(70), inv_codigo VARCHAR(20), inv_nombre VARCHAR(100), inv_estado CHAR(1), inv_stock_min NUMERIC(15,2), inv_existencia NUMERIC(15,2), inv_nivel SMALLINT, inv_valor_pp NUMERIC(15,6), inv_tipo CHAR(1), inv_unid_medida VARCHAR(50), inv_iva CHAR(1), inv_cod_anterior VARCHAR(50) );
 */
 
 @Injectable()
-export class SqlServerInventoryPersistence implements InterfaceInventoryRepository {
+export class SqlServer2000InventoryPersistence implements InterfaceInventoryRepository {
   // Implementation of PostgreSQL persistence logic for inventory
   constructor(
-    private readonly sqlServerService: DatabaseServiceSQLServer2022,
+    private readonly sqlServerService: DatabaseServiceSQLServer2000,
   ) {}
 
   async getInventories(
@@ -21,49 +21,58 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
     offset: number,
   ): Promise<InventoryResponse[]> {
     try {
-      const query = `
-        WITH InventoryPaged AS (
-            SELECT 
-                i.inv_identificador AS inventory_id,
-                i.cta_co_codigo AS company_code,
-                i.cta_co_codigo AS account_code,
-                i.inv_codigo AS item_code,
-                i.inv_nombre AS item_name,
-                i.inv_estado AS item_status,
-                i.inv_stock_min AS min_stock,
-                i.inv_existencia AS current_stock,
-                i.inv_nivel AS item_level,
-                i.inv_valor_pp AS avg_cost_value,
-                i.inv_tipo AS item_type,
-                i.inv_unid_medida AS unit_of_measure,
-                i.inv_iva AS vat_applicable,
-                i.inv_cod_anterior AS previous_code,
-                ROW_NUMBER() OVER (ORDER BY i.inv_identificador) AS rn
-            FROM inv_inventario i
-        )
-        SELECT
-            inventory_id,
-            company_code,
-            account_code,
-            item_code,
-            item_name,
-            item_status,
-            min_stock,
-            current_stock,
-            item_level,
-            avg_cost_value,
-            item_type,
-            unit_of_measure,
-            vat_applicable,
-            previous_code
-        FROM InventoryPaged
-        WHERE rn > @offset
-          AND rn <= (@offset + @limit);
-    `;
-      const params: any[] = [
-        { name: 'limit', value: limit },
-        { name: 'offset', value: offset },
-      ];
+      let query = '';
+      let params: any[] = [];
+
+      if (offset === 0) {
+        query = `
+          SELECT TOP ?
+              i.inv_identificador AS inventory_id,
+              i.cta_co_codigo AS company_code,
+              i.cta_co_codigo AS account_code,
+              i.inv_codigo AS item_code,
+              i.inv_nombre AS item_name,
+              i.inv_estado AS item_status,
+              i.inv_stock_min AS min_stock,
+              i.inv_existencia AS current_stock,
+              i.inv_nivel AS item_level,
+              i.inv_valor_pp AS avg_cost_value,
+              i.inv_tipo AS item_type,
+              i.inv_unid_medida AS unit_of_measure,
+              i.inv_iva AS vat_applicable,
+              i.inv_cod_anterior AS previous_code
+          FROM inv_inventario i
+          ORDER BY i.inv_identificador;
+        `;
+        params = [limit];
+      } else {
+        query = `
+          SELECT TOP ?
+              i.inv_identificador AS inventory_id,
+              i.cta_co_codigo AS company_code,
+              i.cta_co_codigo AS account_code,
+              i.inv_codigo AS item_code,
+              i.inv_nombre AS item_name,
+              i.inv_estado AS item_status,
+              i.inv_stock_min AS min_stock,
+              i.inv_existencia AS current_stock,
+              i.inv_nivel AS item_level,
+              i.inv_valor_pp AS avg_cost_value,
+              i.inv_tipo AS item_type,
+              i.inv_unid_medida AS unit_of_measure,
+              i.inv_iva AS vat_applicable,
+              i.inv_cod_anterior AS previous_code
+          FROM inv_inventario i
+          WHERE i.inv_identificador NOT IN (
+              SELECT TOP ? inv_identificador
+              FROM inv_inventario
+              ORDER BY inv_identificador
+          )
+          ORDER BY i.inv_identificador;
+        `;
+        params = [limit, offset];
+      }
+
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -128,9 +137,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.cta_co_codigo = @accountCode;
+      WHERE i.cta_co_codigo = ?;
     `;
-      const params: any[] = [{ name: 'accountCode', value: accountCode }];
+      const params: any[] = [accountCode];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -164,9 +173,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.cta_co_codigo = @companyCode;
+      WHERE i.cta_co_codigo = ?;
     `;
-      const params: any[] = [{ name: 'companyCode', value: companyCode }];
+      const params: any[] = [companyCode];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -200,9 +209,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_tipo = @itemType;
+      WHERE i.inv_tipo = ?;
     `;
-      const params: any[] = [{ name: 'itemType', value: itemType }];
+      const params: any[] = [itemType];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -234,9 +243,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_estado = @status;
+      WHERE i.inv_estado = ?;
     `;
-      const params: any[] = [{ name: 'status', value: status }];
+      const params: any[] = [status];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -270,9 +279,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_unid_medida = @unitOfMeasure;
+      WHERE i.inv_unid_medida = ?;
     `;
-      const params: any[] = [{ name: 'unitOfMeasure', value: unitOfMeasure }];
+      const params: any[] = [unitOfMeasure];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -306,9 +315,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_codigo LIKE '%' + @itemCode + '%' COLLATE Latin1_General_CI_AI;
+      WHERE i.inv_codigo LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI;
     `;
-      const params: any[] = [{ name: 'itemCode', value: itemCode }];
+      const params: any[] = [itemCode];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -342,9 +351,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_nombre LIKE '%' + @itemName + '%' COLLATE Latin1_General_CI_AI;
+      WHERE i.inv_nombre LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI;
     `;
-      const params: any[] = [{ name: 'itemName', value: itemName }];
+      const params: any[] = [itemName];
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
         params,
@@ -378,10 +387,10 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_identificador = @inventoryId;
+      WHERE i.inv_identificador = ?;
     `;
 
-      const params: any[] = [{ name: 'inventoryId', value: inventoryId }];
+      const params: any[] = [inventoryId];
 
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         query,
@@ -407,16 +416,20 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
       const { limit, offset, query: searchQuery } = params;
 
       let whereClause = '';
+      let subQueryWhereClause = '';
       const queryParams: any[] = [];
 
       if (searchQuery) {
-        whereClause = `WHERE i.inv_nombre LIKE '%' + @searchQuery + '%' COLLATE Latin1_General_CI_AI OR i.inv_codigo LIKE '%' + @searchQuery + '%' COLLATE Latin1_General_CI_AI`;
-        queryParams.push({ name: 'searchQuery', value: searchQuery });
+        whereClause = `WHERE i.inv_nombre LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI OR i.inv_codigo LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI`;
+        subQueryWhereClause = `WHERE inv_nombre LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI OR inv_codigo LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI`;
+        queryParams.push(searchQuery, searchQuery);
       }
 
-      const sqlQuery = `
-      WITH InventoryPaged AS (
-          SELECT
+      let sqlQuery = '';
+      const finalParams: any[] = [];
+      if (offset === 0) {
+        sqlQuery = `
+          SELECT TOP ?
               i.inv_identificador AS inventory_id,
               i.cta_co_codigo AS company_code,
               i.cta_co_codigo AS account_code,
@@ -430,39 +443,50 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
               i.inv_tipo AS item_type,
               i.inv_unid_medida AS unit_of_measure,
               i.inv_iva AS vat_applicable,
-              i.inv_cod_anterior AS previous_code,
-              ROW_NUMBER() OVER (ORDER BY i.inv_identificador) AS rn
+              i.inv_cod_anterior AS previous_code
           FROM inv_inventario i
           ${whereClause}
-      )
-      SELECT
-          inventory_id,
-          company_code,
-          account_code,
-          item_code,
-          item_name,
-          item_status,
-          min_stock,
-          current_stock,
-          item_level,
-          avg_cost_value,
-          item_type,
-          unit_of_measure,
-          vat_applicable,
-          previous_code
-      FROM InventoryPaged
-      WHERE rn > @offset
-        AND rn <= (@offset + @limit);
-    `;
-
-      queryParams.push(
-        { name: 'limit', value: limit },
-        { name: 'offset', value: offset },
-      );
+          ORDER BY i.inv_identificador;
+        `;
+        finalParams.push(limit);
+        if (searchQuery) finalParams.push(searchQuery, searchQuery);
+      } else {
+        sqlQuery = `
+          SELECT TOP ?
+              i.inv_identificador AS inventory_id,
+              i.cta_co_codigo AS company_code,
+              i.cta_co_codigo AS account_code,
+              i.inv_codigo AS item_code,
+              i.inv_nombre AS item_name,
+              i.inv_estado AS item_status,
+              i.inv_stock_min AS min_stock,
+              i.inv_existencia AS current_stock,
+              i.inv_nivel AS item_level,
+              i.inv_valor_pp AS avg_cost_value,
+              i.inv_tipo AS item_type,
+              i.inv_unid_medida AS unit_of_measure,
+              i.inv_iva AS vat_applicable,
+              i.inv_cod_anterior AS previous_code
+          FROM inv_inventario i
+          ${whereClause}
+          ${whereClause ? 'AND' : 'WHERE'} i.inv_identificador NOT IN (
+              SELECT TOP ? inv_identificador
+              FROM inv_inventario
+              ${subQueryWhereClause}
+              ORDER BY inv_identificador
+          )
+          ORDER BY i.inv_identificador;
+        `;
+        // Order of params: TOP limit, then whereClause params (if any), then TOP offset, then subQueryWhereClause params (if any)
+        finalParams.push(limit);
+        if (searchQuery) finalParams.push(searchQuery, searchQuery);
+        finalParams.push(offset);
+        if (searchQuery) finalParams.push(searchQuery, searchQuery);
+      }
 
       const result = await this.sqlServerService.query<InventorySqlResponse>(
         sqlQuery,
-        queryParams,
+        finalParams,
       );
 
       return result.map(

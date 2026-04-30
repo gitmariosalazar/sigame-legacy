@@ -33,9 +33,11 @@
     "kafkajs": "^2.2.4",
     "morgan": "^1.10.1",
     "mssql": "^12.2.0",
+    "odbc": "^2.4.9",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "tedious": "^6.7.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

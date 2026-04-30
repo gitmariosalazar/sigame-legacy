@@ -20,7 +20,7 @@ export class DatabaseServiceSQLServer2022 extends DatabaseAbstract {
   private isConnected: boolean = false;
   private readonly maxRetries: number = 3;
   private readonly retryDelayMs: number = 1000;
-  private readonly queryTimeoutMs: number = 10000;
+  private readonly queryTimeoutMs: number = 60000;
 
   public constructor() {
     super();
@@ -31,6 +31,7 @@ export class DatabaseServiceSQLServer2022 extends DatabaseAbstract {
       server: environments.DATABASE_HOST,
       database: environments.DATABASE_NAME,
       port: environments.DATABASE_PORT,
+      requestTimeout: 60000, // <--- Movido a la raíz para que mssql lo reconozca
       pool: {
         max: 20,
         min: 0,
@@ -39,7 +40,6 @@ export class DatabaseServiceSQLServer2022 extends DatabaseAbstract {
       options: {
         encrypt: false,
         trustServerCertificate: true,
-        requestTimeout: 2000,
       },
     };
 

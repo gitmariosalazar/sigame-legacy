@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { SqlServerInventoryModule } from '../../modules/inventory/infrastructure/modules/postgresql/inventory.postgresql.module';
+import { SqlServerInventoryModule } from '../../modules/inventory/infrastructure/modules/sqlserver/inventory.sql-server.module';
 
 @Module({
   imports: [SqlServerInventoryModule],

@@ -4,8 +4,6 @@ import { Logger } from '@nestjs/common';
 import { Transport } from '@nestjs/microservices';
 import { environments } from './settings/environments/environments';
 import * as morgan from 'morgan';
-import { DatabaseServicePostgreSQL } from './shared/connections/database/postgresql/postgresql.service';
-import { DatabaseServiceSQLServer2022 } from './shared/connections/database/postgresql/sqlserver.service';
 
 async function bootstrap() {
   const logger: Logger = new Logger('SigameLegacyApp');
@@ -15,10 +13,6 @@ async function bootstrap() {
   //await app.listen(environments.NODE_ENV === 'production' ? 3015 : 4015);
   app.use(morgan('dev'));
 
-  const sqlServerService: DatabaseServiceSQLServer2022 =
-    new DatabaseServiceSQLServer2022();
-
-  logger.log(await sqlServerService.connect());
   /*
   logger.log(
     `🚀🎉 The SigameLegacy microservice is running on: http://localhost:${environments.NODE_ENV === 'production' ? 3007 : 4007}✅`,
