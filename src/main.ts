@@ -10,7 +10,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  //await app.listen(environments.NODE_ENV === 'production' ? 3015 : 4015);
+  await app.listen(environments.NODE_ENV === 'production' ? 3015 : 4015);
   app.use(morgan('dev'));
 
   /*
