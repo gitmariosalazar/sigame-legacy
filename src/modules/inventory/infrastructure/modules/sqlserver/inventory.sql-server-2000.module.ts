@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { InventoryService } from '../../../application/services/inventory.service';
-import { SqlServerInventoryPersistence } from '../../repositories/sqlserver/persistence/sqlserver.inventory.persistence';
 import { InventoryController } from '../../controller/inventory.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { environments } from '../../../../../settings/environments/environments';
 import { DatabasePersistenceModule } from '../../../../../shared/connections/database/database-persistence.module';
+import { SqlServer2000InventoryPersistence } from '../../repositories/sqlserver/persistence/sqlserver-2000.inventory.persistence';
 
 @Module({
   imports: [
@@ -30,9 +30,9 @@ import { DatabasePersistenceModule } from '../../../../../shared/connections/dat
     InventoryService,
     {
       provide: 'InventoryRepository',
-      useClass: SqlServerInventoryPersistence,
+      useClass: SqlServer2000InventoryPersistence,
     },
   ],
   exports: [],
 })
-export class SqlServerInventoryModule {}
+export class SqlServer2000InventoryModule {}

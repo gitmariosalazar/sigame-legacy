@@ -3,16 +3,24 @@
 FROM node:24-alpine3.22 AS deps
 # Set working directory
 WORKDIR /usr/src/app
+
+# Install build tools and odbc dependencies early
+RUN apk add --no-cache unixodbc unixodbc-dev g++ make python3 libc6-compat
+
 # Copy package.json and package-lock.json
 COPY package.json ./
 COPY package-lock.json ./
-# Install dependencies
+# Install dependencies and build tools for native modules
 RUN npm install --legacy-peer-deps
 
-# Build Stage - docker build -t qrcode-service .
+# Build Stage
 FROM node:24-alpine3.22 AS builder
 # Set working directory
 WORKDIR /usr/src/app
+
+# Install build tools for compilation if needed
+RUN apk add --no-cache unixodbc unixodbc-dev g++ make python3 libc6-compat
+
 # Copy the dependencies from the deps stage
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 # Copy the rest of the application code
@@ -21,12 +29,15 @@ COPY . .
 RUN npm run build
 # Clean up dev dependencies
 RUN npm prune --production
-RUN npm ci --only --production && npm cache clean --force
 
 # Create the application image
 FROM node:24-alpine3.22 AS production
 # Set working directory
 WORKDIR /usr/src/app
+
+# Install runtime libraries early
+RUN apk add --no-cache unixodbc libc6-compat
+
 # Copy the built application from the builder stage
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist

@@ -1,6 +1,15 @@
 FROM node:24-alpine3.22 AS deps
 
-RUN apk add --no-cache curl netcat-openbsd
+RUN apk add --no-cache \
+	curl \
+	netcat-openbsd \
+	unixodbc \
+	unixodbc-dev \
+	freetds \
+	freetds-dev \
+	build-base \
+	python3 \
+ && ( [ -e /usr/lib/libodbc.so.2 ] || ln -s /usr/lib/libodbc.so.2.0.0 /usr/lib/libodbc.so.2 )
 
 WORKDIR /usr/src/app
 
@@ -8,12 +17,13 @@ COPY package*.json ./
 COPY package-lock.json ./
 
 RUN npm config set registry https://registry.yarnpkg.com/ \
- && npm install
+ && npm install \
+ && npm rebuild odbc
 
 COPY . .
 
 ENV NODE_ENV=development
 
-#EXPOSE 4015
+EXPOSE 4015
 
 CMD ["npm", "run", "start:dev"]

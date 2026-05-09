@@ -3,17 +3,12 @@ import { InterfaceInventoryRepository } from '../../../../domain/contracts/invee
 import { InventoryResponse } from '../../../../domain/schemas/dto/response/inventory.response';
 import { InventorySqlResponse } from '../../../interfaces/sql/inventory.sql.response';
 import { InventoryAdapter } from '../adapters/inventory.adapter';
-import { DatabaseServiceSQLServer2022 } from '../../../../../../shared/connections/database/sqlserver/sqlserver-2022.service';
-
-/*
-CREATE TABLE inv_inventario ( inv_identificador INT NOT NULL, cta_co_codigo VARCHAR(70), inv_codigo VARCHAR(20), inv_nombre VARCHAR(100), inv_estado CHAR(1), inv_stock_min NUMERIC(15,2), inv_existencia NUMERIC(15,2), inv_nivel SMALLINT, inv_valor_pp NUMERIC(15,6), inv_tipo CHAR(1), inv_unid_medida VARCHAR(50), inv_iva CHAR(1), inv_cod_anterior VARCHAR(50) );
-*/
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 
 @Injectable()
 export class SqlServerInventoryPersistence implements InterfaceInventoryRepository {
-  // Implementation of PostgreSQL persistence logic for inventory
   constructor(
-    private readonly sqlServerService: DatabaseServiceSQLServer2022,
+    private readonly databaseService: DatabaseAbstract,
   ) {}
 
   async getInventories(
@@ -57,19 +52,16 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
             vat_applicable,
             previous_code
         FROM InventoryPaged
-        WHERE rn > @offset
-          AND rn <= (@offset + @limit);
+        WHERE rn > ?
+          AND rn <= (? + ?);
     `;
-      const params: any[] = [
-        { name: 'limit', value: limit },
-        { name: 'offset', value: offset },
-      ];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [offset, offset, limit];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -98,9 +90,9 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
       WHERE i.inv_existencia < i.inv_stock_min;
     `;
       const result =
-        await this.sqlServerService.query<InventorySqlResponse>(query);
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+        await this.databaseService.query<InventorySqlResponse>(query);
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -128,15 +120,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.cta_co_codigo = @accountCode;
+      WHERE i.cta_co_codigo = ?;
     `;
-      const params: any[] = [{ name: 'accountCode', value: accountCode }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [accountCode];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -164,15 +156,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.cta_co_codigo = @companyCode;
+      WHERE i.cta_co_codigo = ?;
     `;
-      const params: any[] = [{ name: 'companyCode', value: companyCode }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [companyCode];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -200,15 +192,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_tipo = @itemType;
+      WHERE i.inv_tipo = ?;
     `;
-      const params: any[] = [{ name: 'itemType', value: itemType }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [itemType];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -234,15 +226,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_estado = @status;
+      WHERE i.inv_estado = ?;
     `;
-      const params: any[] = [{ name: 'status', value: status }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [status];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -270,15 +262,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_unid_medida = @unitOfMeasure;
+      WHERE i.inv_unid_medida = ?;
     `;
-      const params: any[] = [{ name: 'unitOfMeasure', value: unitOfMeasure }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [unitOfMeasure];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -306,15 +298,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_codigo LIKE '%' + @itemCode + '%' COLLATE Latin1_General_CI_AI;
+      WHERE i.inv_codigo LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI;
     `;
-      const params: any[] = [{ name: 'itemCode', value: itemCode }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [itemCode];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -342,15 +334,15 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_nombre LIKE '%' + @itemName + '%' COLLATE Latin1_General_CI_AI;
+      WHERE i.inv_nombre LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI;
     `;
-      const params: any[] = [{ name: 'itemName', value: itemName }];
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const params = [itemName];
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
@@ -378,12 +370,12 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           i.inv_iva AS vat_applicable,
           i.inv_cod_anterior AS previous_code
       FROM inv_inventario i
-      WHERE i.inv_identificador = @inventoryId;
+      WHERE i.inv_identificador = ?;
     `;
 
-      const params: any[] = [{ name: 'inventoryId', value: inventoryId }];
+      const params = [inventoryId];
 
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const result = await this.databaseService.query<InventorySqlResponse>(
         query,
         params,
       );
@@ -410,9 +402,11 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
       const queryParams: any[] = [];
 
       if (searchQuery) {
-        whereClause = `WHERE i.inv_nombre LIKE '%' + @searchQuery + '%' COLLATE Latin1_General_CI_AI OR i.inv_codigo LIKE '%' + @searchQuery + '%' COLLATE Latin1_General_CI_AI`;
-        queryParams.push({ name: 'searchQuery', value: searchQuery });
+        whereClause = `WHERE i.inv_nombre LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI OR i.inv_codigo LIKE '%' + ? + '%' COLLATE Latin1_General_CI_AI`;
+        queryParams.push(searchQuery, searchQuery);
       }
+
+      queryParams.push(offset, offset, limit);
 
       const sqlQuery = `
       WITH InventoryPaged AS (
@@ -451,22 +445,17 @@ export class SqlServerInventoryPersistence implements InterfaceInventoryReposito
           vat_applicable,
           previous_code
       FROM InventoryPaged
-      WHERE rn > @offset
-        AND rn <= (@offset + @limit);
+      WHERE rn > ?
+        AND rn <= (? + ?);
     `;
 
-      queryParams.push(
-        { name: 'limit', value: limit },
-        { name: 'offset', value: offset },
-      );
-
-      const result = await this.sqlServerService.query<InventorySqlResponse>(
+      const result = await this.databaseService.query<InventorySqlResponse>(
         sqlQuery,
         queryParams,
       );
 
-      return result.map(
-        InventoryAdapter.fromInventorySqlResponseToInventoryResponse,
+      return result.map((item) =>
+        InventoryAdapter.fromInventorySqlResponseToInventoryResponse(item),
       );
     } catch (error) {
       throw error;
