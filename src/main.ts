@@ -1,3 +1,4 @@
+import { CustomServerKafka } from './shared/kafka/custom-server-kafka';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
@@ -24,17 +25,19 @@ async function bootstrap() {
   */
 
   const microservice = await NestFactory.createMicroservice(AppModule, {
-    transport: Transport.KAFKA,
-    options: {
-      client: {
+    strategy: new CustomServerKafka(
+      {
+        client: {
         clientId: environments.INVENTORY_KAFKA_CLIENT_ID,
         brokers: [environments.KAFKA_BROKER_URL],
       },
       consumer: {
         groupId: environments.INVENTORY_KAFKA_GROUP_ID,
         allowAutoTopicCreation: true,
+      }
       },
-    },
+      environments.KAFKA_TOPIC
+    ),
   });
 
   await microservice.listen();
